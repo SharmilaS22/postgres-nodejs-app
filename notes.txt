@@ -1,0 +1,34 @@
+install postgres
+
+https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+
+port 5432
+
+
+-----
+npm init
+
++ express@4.17.1
++ ejs@3.1.6
++ pg@8.6.0
++ sequelize@6.6.2
++ pg-hstore@2.3.3
+
+=====
+# One of the following:
+$ npm install --save pg pg-hstore # Postgres
+$ npm install --save mysql2
+$ npm install --save mariadb
+$ npm install --save sqlite3
+$ npm install --save tedious # Microsoft SQL Server
+
+https://sequelize.org/master/manual/getting-started.html
+
+
+
+const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize('database', 'username', 'password', {
+  host: 'localhost',
+  dialect: /* one of 'mysql' | 'mariadb' | 'postgres' | 'mssql' */
+});
