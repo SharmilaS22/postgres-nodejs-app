@@ -5,8 +5,8 @@ const { Sequelize, DataTypes } = require('sequelize');
 const app = express();
 
 app.use(express.json());
-app.set("view engine", "ejs");
-app.use(express.static('public'));
+// app.set("view engine", "ejs");
+// app.use(express.static('public'));
 
 // database connection
 const sequelize = new Sequelize('testDB', process.env.DBUSER, process.env.DBPASSWORD, {
@@ -45,7 +45,12 @@ app.get('/', (req, res) => {
     res.send("hello world");
 });
 
-// user route
+/*
+Route /user
+GET     - Get all users
+POST    - Add a new user
+DELETE  - Delete all users
+*/
 app
 .route('/user')
 .get(async (req, res) => {
@@ -87,29 +92,88 @@ app
         res.send(err);
     }
 })
-.delete((req, res) => {
-    res.status(405).send("method not allowed");
+.delete(async (req, res) => {
+    
+    await User.destroy({
+        truncate: true
+    });
+
+    res.send('Deleted all records');
+});
+
+
+/*
+Route /user/:userid
+
+GET      - Get user details with given userid
+DELETE   - Delete the user with given userid
+PUT      - Updates the user with given userid (updates all the fields)
+PATCH    - Updates the user with given userid 
+*/
+
+app.route('/user/:userid')
+.get( async (req, res) => {
+
+    const { userDetails, err } = await User.findOne({ 
+        where: { id: req.params.userid },
+        attributes: ['id', 'name', 'email']
+    })
+    .then((user) => ({userDetails: user, err: null}))
+    .catch((err) => ({userDetails: null, err: err}))
+    
+    // check if users exist
+    if (userDetails) {
+        res.status(200).json({
+            status: 'success',
+            data: userDetails,
+        })
+    } else {
+        res.send(err);
+    }  
+ 
 })
+.delete(async (req, res) => {
+    const result = await User.destroy({
+        where: { id: req.params.userid }
+    }).then(result => result)
+    .catch(err => console.log(err))
 
-// handlers
-const getAllUsers = async () => {
-    const result = await User.findAll({ attributes: ['id', 'name', 'email']})
-    .then((users) => ({allUsers: users, err: null}))
-    .catch((err) => ({allUsers: null, err: err}))
-    return result;
-}
+    if(result != 0) {
+        res.send("Deleted successfully");
+    } else {
+        res.send("No such entry found");
+    }
+})
+.put( async (req, res) => {
 
+    await User.update(
+        // { name: req.body.name, email: req.body.email }, 
+        req.body,       
+        { where: {id: req.params.userid } }
+    ).then(result => {
+        if (result[0] == 0) {
+            res.send("No entry modified");
+        } else {
+            res.send("Updated successfully");
+        }
+    })
+    .catch(err => res.send(err));
 
-const addNewUser = async (userObj) => await User.create(aUser)
-    .then(() => ({ 
-        status: true,
-        err: false
-    }))
-    .catch(err => ({
-        status: false,
-        err: err
-    }));
+})
+.patch( async (req, res) => {
 
+    await User.update(
+        req.body,       
+        { where: {id: req.params.userid } }
+    ).then(result => {
+        if (result[0] == 0) {
+            res.send("No entry modified");
+        } else {
+            res.send("Updated successfully");
+        }
+    })
+    .catch(err => res.send(err));
 
+});
 
 app.listen(3000, () => console.log("Server listening"));
